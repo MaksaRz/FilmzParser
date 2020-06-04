@@ -12,7 +12,7 @@ namespace FilmzParser.Rutor
 {
     public class RutorParser: IParser<string[]>
     {
-        public async Task<string[]> ParseFilmPage(IDocument document)
+        public async Task<string> ParseFilmPage(IDocument document)
         {
             IHtmlTableElement filmInfoTable = (IHtmlTableElement)document.All.First(t => t.LocalName == "table" && t.Id == "details");
             
@@ -34,6 +34,7 @@ namespace FilmzParser.Rutor
             IHtmlAnchorElement anchorElIMDB      = anchorElements.FirstOrDefault(t => (t as IHtmlAnchorElement).Origin.Contains("imdb")) as IHtmlAnchorElement;
             (string kpVotes, string kpRating, string imdbVotes, string imdbRating)  = await GetRatings(anchorElKinopoisk,
                 anchorElIMDB);
+            return string.Empty;
         }
         
         private static async Task<(string kpVotes, string kpRating, string imdbVotes, string imdbRating)> GetRatings(IHtmlAnchorElement elKp, IHtmlAnchorElement elImdb)
@@ -71,10 +72,25 @@ namespace FilmzParser.Rutor
             return (kpVotes, kpRating, imdbVotes, imdbRating);
         }
 
-        public string[] Parse(IHtmlDocument document)
+        public async Task<string[]> Parse(IParserSettings settings)
         {
-           // IDocument document = await  BrowsingContext.New(Configuration.Default).OpenAsync(req => req.Content(new StreamReader("..\\..\\..\\..\\TestParser\\filmPage.html").BaseStream));
-            
+            IDocument document1 = await BrowsingContext.New(Configuration.Default).OpenAsync(req => req.Content(new StreamReader("..\\..\\..\\..\\TestParser\\filmPage.html").BaseStream));
+
+            foreach (var path in settings.PathForParsing)
+            {
+                string url = $"{settings.SiteUrl}/{path}/";
+                using (var client = new HttpClient())
+                {
+                    var stringAsync = await client.GetStringAsync(url);
+                    var document = await  BrowsingContext.New(Configuration.Default.WithDefaultLoader()).OpenAsync(req =>req.Content(stringAsync));       
+                   // document.Context.Active
+                    var filmsTableEl = document.QuerySelector("#index tbody tr td:nth-child(2) a:nth-child(2)");
+                }
+          
+                
+            }
+
+            return new string[]{"fffff", "fdf"};
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using FilmzParser.Common;
 
 namespace FilmzParser
 {
@@ -8,7 +9,8 @@ namespace FilmzParser
     {
         string SiteUrl { get; set; }
         string[] PathForParsing { get; set; }
-        Dictionary<string, Func<string[], IFilmInfo, bool>> SelectionRules { get; set; }
-        Dictionary<string,string> Selection { get; set; }
+        Dictionary<string, Func<string[], IFilmInfo, bool>> Selectors { get; set; }
+        SelectionRule Selection { get; set; }
+        
     }
 }
