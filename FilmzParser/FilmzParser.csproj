@@ -9,8 +9,4 @@
       <PackageReference Include="AngleSharp" Version="1.0.0-alpha-825" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Rutor" />
-    </ItemGroup>
-
 </Project>

@@ -4,6 +4,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
@@ -40,32 +43,46 @@ namespace FilmzParser
             var AnchorElements = htmlTableCellElement.ChildNodes.Where(t => t is IHtmlAnchorElement && (t as IHtmlAnchorElement).NodeName == "A").ToArray();
             IHtmlAnchorElement anchorElKinopoisk = AnchorElements.FirstOrDefault(t => (t as IHtmlAnchorElement).Origin.Contains(("kinopoisk"))) as IHtmlAnchorElement;
             IHtmlAnchorElement anchorElIMDB      = AnchorElements.FirstOrDefault(t => (t as IHtmlAnchorElement).Origin.Contains("imdb")) as IHtmlAnchorElement;
-            (string kpVotes, string kpRaiting, string imdbVotes, string imdbRaiting) af = GetRaitings(anchorElKinopoisk,
+            (string kpVotes, string kpRaiting, string imdbVotes, string imdbRaiting)  = await GetRaitings(anchorElKinopoisk,
                 anchorElIMDB);
             
 
          
         }
         
-        private static (string kpVotes, string kpRaiting, string imdbVotes, string imdbRaiting) GetRaitings(IHtmlAnchorElement elKp, IHtmlAnchorElement elImdb)
+        private static async Task<(string kpVotes, string kpRaiting, string imdbVotes, string imdbRaiting)> GetRaitings(IHtmlAnchorElement elKp, IHtmlAnchorElement elImdb)
         {
             //https://rating.kinopoisk.ru/4169.xml
-            string kpVotes, kpRaiting, imdbVotes, imdbRaiting;
+            string kpVotes = "", kpRaiting = "", imdbVotes = "", imdbRaiting = "";
             if (elKp != null)
             {
+                string filmIdKp = elKp.PathName.Replace("film", "").Replace("/", "");
+                string responseBody = "";
                 using (HttpClient client = new HttpClient())
                 {
-                    HttpResponseMessage response =  client.GetAsync("http://www.contoso.com/").ConfigureAwait(false);
+                    HttpResponseMessage response = await client.GetAsync($"https://rating.kinopoisk.ru/{filmIdKp}.xml").ConfigureAwait(false);
                     response.EnsureSuccessStatusCode();
-                    string responseBody = await response.Content.ReadAsStringAsync();
+                    responseBody = await response.Content.ReadAsStringAsync();
                 }
-                string filmIdKp = elKp.PathName.Replace("film", "").Replace("\\", "");
                 
+               XDocument xd = XDocument.Parse(responseBody);
+               var kp   = xd.XPathSelectElement("rating/kp_rating ");
+               var imdb = xd.XPathSelectElement("rating/imdb_rating ");
+               kpRaiting     = kp?.Value ?? "";
+               kpVotes       = kp?.Attribute("num_vote")?.Value ?? "";
+               imdbRaiting   = imdb?.Value ?? "";
+               imdbVotes     = imdb?.Attribute("num_vote")?.Value ?? "";
+
             }
             else if (elImdb != null)
             {
-                
+                kpVotes= "";
+                kpRaiting= "";
+                imdbVotes= "";
+                imdbRaiting = "";  
             }
+
+            return (kpVotes, kpRaiting, imdbVotes, imdbRaiting);
         }
     }
 
